@@ -13,33 +13,111 @@ class DOMHelper {
     }
 }
 
-class Tooltip {
+//my
+// class ExtraInfo {
+//     constructor(infoText) {
+//         this.infoText = infoText;
+//     }
+// }
+
+class Component {
+    constructor(hostElementId, insertBefore = false) {
+        if (hostElementId) {
+            this.hostElement = document.getElementById(hostElementId);
+        } else {
+            this.hostElement = document.body;
+        }
+        this.insertBefore = insertBefore;
+    }
+
+    detach() {
+        if (this.element) {
+            // this.element.remove();
+            this.element.parentElement.removeChild(this.element);
+        }
+    }
+
+    attach() {
+        this.hostElement.insertAdjacentElement(this.insertBefore ? 'afterbegin' : 'beforeend', this.element);
+    }
+}
+
+class Tooltip extends Component {
+    constructor(closeNotifierFunction) {
+        super();
+        this.closeNotifier = closeNotifierFunction;
+        this.create();
+    }
+
+    closeTooltip = () => {
+        this.detach();
+        this.closeNotifier();
+    }
+
+    create() {
+        const tooltipElement = document.createElement('div');
+        tooltipElement.className = 'card';
+        tooltipElement.textContent = "JIHAD";
+        tooltipElement.addEventListener('click', this.closeTooltip);
+        this.element = tooltipElement;
+    }
 
 }
 
 class ProjectItem {
-    #extraInfo;
 
-    constructor(id, updateProjectListsFunction) {
+    hasActiveTooltip = false;
+
+    constructor(id, updateProjectListsFunction, type, extraInfo) {
         this.id = id;
         this.updateProjectListsHandler = updateProjectListsFunction;
-        this.connectSwitchButton();
-        this.connectInfoButton();
+        this.connectSwitchButton(type);
+        this.connectInfoButton(extraInfo);
     }
 
-    connectInfoButton() {
+    //my solution
+    // connectInfoButton(extraInfo) {
+    //     const projectItemElement = document.getElementById(this.id);
+    //     const moreInfoBtn = projectItemElement.querySelector('button:first-of-type');
+    //     moreInfoBtn.addEventListener('click', this.displayInfo.bind(this, extraInfo.infoText, projectItemElement));
+    //
+    // }
+
+    // displayInfo(information, projectItemElement){
+    //     const description = document.createElement('p');
+    //     description.innerHTML = `<p>${information}</p>`;
+    //     projectItemElement.appendChild(description);
+    //     DOMHelper.clearEventListeners(projectItemElement.querySelector('button:first-of-type'));
+    // }
+
+    showMoreInfoHandler() {
+        if (this.hasActiveTooltip) {
+            return;
+        }
+        const tooltip = new Tooltip( () => {
+            this.hasActiveTooltip = false;
+        });
+        tooltip.attach();
+        this.hasActiveTooltip = true;
+    }
+
+    connectInfoButton(extraInfo) {
+        const projectItemElement = document.getElementById(this.id);
+        const moreInfoBtn = projectItemElement.querySelector('button:first-of-type');
+        moreInfoBtn.addEventListener('click', this.showMoreInfoHandler);
 
     }
 
-    update(updateProjectListsFn, type){
+    update(updateProjectListsFn, type) {
         this.updateProjectListsHandler = updateProjectListsFn;
-        this.connectSwitchButton();
+        this.connectSwitchButton(type);
     }
 
-    connectSwitchButton() {
+    connectSwitchButton(type) {
         const projectItemElement = document.getElementById(this.id);
         let switchBtn = projectItemElement.querySelector('button:last-of-type');
         switchBtn = DOMHelper.clearEventListeners(switchBtn);
+        switchBtn.textContent = type === 'active' ? 'Finish' : 'Activate';
         switchBtn.addEventListener(
             'click',
             this.updateProjectListsHandler.bind(null, this.id)
@@ -50,14 +128,23 @@ class ProjectItem {
 class ProjectList {
     projects = [];
 
+    //my soutiion
+    // constructor(type) {
+    //     this.type = type;
+    //     const projItems = document.querySelectorAll(`#${type}-projects ul > li`);
+    //     for (const projItem of projItems) {
+    //         const info = new ExtraInfo(projItem.dataset.extraInfo)
+    //         this.projects.push(new ProjectItem(projItem.id, this.switchProject.bind(this), this.type, info));
+    //         // console.log(this);
+    //     }
+    // }
+
     constructor(type) {
         this.type = type;
         const projItems = document.querySelectorAll(`#${type}-projects ul > li`);
         for (const projItem of projItems) {
-            this.projects.push(new ProjectItem(projItem.id, this.switchProject.bind(this)));
+            this.projects.push(new ProjectItem(projItem.id, this.switchProject.bind(this), this.type));
         }
-
-
     }
 
     setSwitchHandlerFunction(switchHandlerFunction) {
