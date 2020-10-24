@@ -30,6 +30,49 @@ buttons.forEach((btn) => {
 
 window.addEventListener('scroll', scrollHandler);
 
+//**** Form ****
+const form = document.querySelector('form');
+form.addEventListener('submit', (event) => {
+    console.log(event);
+    event.preventDefault();
+});
+
+// **** Bubbling and Capturing ***
+const div1 = document.getElementById('one');
+const div2 = document.getElementById('two');
+const div3 = document.getElementById('three');
+
+div1.addEventListener('click', event => {
+    console.log("click on 1");
+});
+div2.addEventListener('click', event => {
+    // event.stopPropagation();
+    console.log("click on 2, set to capture");
+}, false);  //set TRUE to Capturing phase
+div3.addEventListener('click', event => {
+    console.log("click on 3");
+    event.stopPropagation();
+});
+
+// ***** EVENT Delegation ****
+const listItems = document.querySelectorAll('li');
+
+//this is cumbersome and not good by performance
+// listItems.forEach( listItem => {
+//     listItem.addEventListener('click', event => {
+//         event.target.classList.toggle('highlight');
+//     })
+// });
+
+//solution 2:
+const list = document.querySelector('ul');
+
+list.addEventListener('click', event => {
+    // console.log(event.currentTarget);
+    // event.target.classList.toggle('highlight');
+    event.target.closest('li').classList.toggle('highlight');  //including the element from which this is called from
+});
+
 //=================
 // INFINITE SCROLL
 //=================
