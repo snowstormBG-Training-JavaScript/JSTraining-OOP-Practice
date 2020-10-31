@@ -66,10 +66,10 @@ class Tooltip extends Component {
         tooltipBody.querySelector('p').textContent = this.text;
         tooltipElement.append(tooltipBody);
 
-        const  hostElPosLeft = this.hostElement.offsetLeft;
-        const  hostElPosTop = this.hostElement.offsetTop;
-        const  hostElHeight = this.hostElement.clientHeight;
-        const  parentElScrolling = this.hostElement.parentElement.scrollTop;
+        const hostElPosLeft = this.hostElement.offsetLeft;
+        const hostElPosTop = this.hostElement.offsetTop;
+        const hostElHeight = this.hostElement.clientHeight;
+        const parentElScrolling = this.hostElement.parentElement.scrollTop;
 
         const x = hostElPosLeft + 20;
         const y = hostElPosTop + hostElHeight - parentElScrolling - 10;
@@ -93,6 +93,7 @@ class ProjectItem {
         this.updateProjectListsHandler = updateProjectListsFunction;
         this.connectSwitchButton(type);
         this.connectInfoButton(extraInfo);
+        this.connectDrag();
     }
 
     //my solution
@@ -117,13 +118,24 @@ class ProjectItem {
         const projectElement = document.getElementById(this.id);
         const tooltipText = projectElement.dataset.extraInfo;
         const tooltip = new Tooltip(() => {
-            this.hasActiveTooltip = false;
-        },
+                this.hasActiveTooltip = false;
+            },
             tooltipText,
             this.id
         );
         tooltip.attach();
         this.hasActiveTooltip = true;
+    }
+
+    connectDrag() {
+        const item = document.getElementById(this.id);
+        item.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('text/plain', this.id);
+            event.dataTransfer.effectAllowed = 'move';
+        });
+        item.addEventListener('dragend', event => {
+            // console.log(event);
+        });
     }
 
     connectInfoButton() {
@@ -170,6 +182,35 @@ class ProjectList {
         for (const projItem of projItems) {
             this.projects.push(new ProjectItem(projItem.id, this.switchProject.bind(this), this.type));
         }
+        this.connectDroppable(this.type);
+    }
+
+    connectDroppable(type) {
+        const list = document.querySelector(`#${type}-projects ul`);
+        list.addEventListener('dragenter', event => {
+            if (event.dataTransfer.types[0] === 'text/plain') {
+                event.preventDefault();
+                list.parentElement.classList.add('droppable');
+            }
+        });
+        list.addEventListener('dragover', event => {
+            event.preventDefault();
+        });
+        list.addEventListener('dragleave', event => {
+            if (event.relatedTarget.closest(`#${type}-projects ul`) !== list) {
+                list.parentElement.classList.remove('droppable');
+            }
+        });
+        list.addEventListener('drop', event => {
+            const prjId = event.dataTransfer.getData('text/plain');
+            if (this.projects.find(p=> p.id === prjId)){
+                return;
+            } else {
+                document.getElementById(prjId).querySelector('button:last-of-type').click();
+                list.parentElement.classList.remove('droppable');
+                event.preventDefault();
+            }
+        });
     }
 
     setSwitchHandlerFunction(switchHandlerFunction) {
@@ -203,13 +244,13 @@ class App {
         // someScript.textContent = 'alert("Hi there!")';
         // document.head.append(someScript);
 
-        const timerId = setTimeout(this.startAnalytics, 3000);
-
-        const stopAnalyticsBtn = document.getElementById('start-analytics-btn');
-        stopAnalyticsBtn.addEventListener('click', () => {
-            clearTimeout(timerId);
-            console.log('stopped');
-        });
+        // const timerId = setTimeout(this.startAnalytics, 3000);
+        //
+        // const stopAnalyticsBtn = document.getElementById('start-analytics-btn');
+        // stopAnalyticsBtn.addEventListener('click', () => {
+        //     clearTimeout(timerId);
+        //     console.log('stopped');
+        // });
 
     }
 
@@ -223,3 +264,14 @@ class App {
 }
 
 App.init();
+
+
+//=================
+// Drag & Drop
+//=================
+// first make them draggable
+// then listen to "dragstart" ... drag queens :D
+//accept drop via "dragenter and dragover events => preventDefault() which is to prevent drop
+// optional : listen to dragleave event
+// listen to drop and update data
+// optional : listen to dragend on the thing

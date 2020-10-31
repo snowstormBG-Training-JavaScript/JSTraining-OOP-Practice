@@ -71,7 +71,10 @@ list.addEventListener('click', event => {
     // console.log(event.currentTarget);
     // event.target.classList.toggle('highlight');
     event.target.closest('li').classList.toggle('highlight');  //including the element from which this is called from
+    form.submit();
 });
+
+
 
 //=================
 // INFINITE SCROLL
